@@ -216,6 +216,7 @@ class ResNet(fluid.dygraph.Layer):
                                  stride=1,
                                  name='layer4',
                                  dilation=4))
+        # This layer will make a m*m matrix to 1 * 1 element...
         self.last_pool = Pool2D(pool_size=7, # ignore if global_pooling is True
                                 global_pooling=True,
                                 pool_type='avg')
@@ -229,20 +230,27 @@ class ResNet(fluid.dygraph.Layer):
     def forward(self, inputs):
         x = self.conv(inputs)
         x = self.pool2d_max(x)
-
-        #print(x.shape)
+        # if we use the resnet50 
+        print(x.shape)
+        # the layer1 conclude 3 * 3 = 9 conv layers
         x = self.layer1(x)
-        #print(x.shape)
+        print(x.shape)
+        # the layer2 conclude 4 * 3 = 12 conv layers
         x = self.layer2(x)
-        #print(x.shape)
+        print(x.shape)
+        # the layer3 conclude 6 * 3 = 18 conv layers
         x = self.layer3(x)
-        #print(x.shape)
+        print(x.shape)
+        # the layer4 conclude 3 * 3 = 9 conv layers
         x = self.layer4(x)
-        #print(x.shape)
+        print(x.shape)
 
         x = self.last_pool(x)
+        #print(x.shape)
         x = fluid.layers.reshape(x, shape=[-1, self.out_dim])
+        #print(x.shape)
         x = self.fc(x)
+        #print(x.shape)
 
         return x
 

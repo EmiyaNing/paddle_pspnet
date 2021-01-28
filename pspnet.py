@@ -56,7 +56,7 @@ class PSPNet(Layer):
             Conv2D(num_channels = num_channels, num_filters = 512, filter_size= 3, padding=1),
             BatchNorm(512, act='relu'),
             Dropout(0.1),
-            Conv2D(num_channels=512, num_filters=num_classes, filter_size=1)
+            Conv2D(num_channels=512, num_filters=num_classes, filter_size=1, act='softmax')
         )
         # aux: 1024 -> 256 -> num_classes
         num_channels /= 4
@@ -64,7 +64,7 @@ class PSPNet(Layer):
             Conv2D(num_channels = 1024, num_filters = 256, filter_size= 3, padding=1),
             BatchNorm(256, act='relu'),
             Dropout(0.1),
-            Conv2D(num_channels=256, num_filters=num_classes, filter_size=1)
+            Conv2D(num_channels=256, num_filters=num_classes, filter_size=1, act='softmax')
         )
         
     def forward(self, inputs):

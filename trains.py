@@ -6,15 +6,17 @@ import numpy as np
 import argparse
 from utils import AverageMeter
 from unet  import UNet
+from pspnet import PSPNet
 from basic_data_load import BasicDataLoader,Transform
 from seg_loss import Basic_SegLoss
 #from basic_data_preprocessing import TrainAugmentation
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--net', type=str, default='basic')
-parser.add_argument('--lr', type=float, default=0.001)
-parser.add_argument('--num_epochs', type=int, default=20)
+#parser.add_argument('--net', type=str, default='basic')
+parser.add_argument('--net', type=str, default='pspnet')
+parser.add_argument('--lr', type=float, default=0.0001)
+parser.add_argument('--num_epochs', type=int, default=40)
 parser.add_argument('--batch_size', type=int, default=4)
 parser.add_argument('--image_folder', type=str, default='./dummy_data')
 parser.add_argument('--image_list_file', type=str, default='./dummy_data/list.txt')
@@ -24,15 +26,17 @@ parser.add_argument('--save_freq', type=int, default=2)
 
 args = parser.parse_args()
 
-def train(dataloader, model, criterion, optimizer, epoch, total_batch):
+def train(dataloader, model, criterion, optimizer, epoch, total_batch, psp_flag):
     model.train()
     train_loss_meter = AverageMeter()
     for batch_id, data in enumerate(dataloader):
         image = data[0].astype("float32")
         label = data[1]
         image = fluid.layers.transpose(image, perm=(0, 3, 1, 2))
-
-        pred  = model(image)
+        if psp_flag:
+            pred  = model(image)[0]
+        else:
+            pred  = model(image)
         loss  = criterion(pred, label)
         loss.backward()
         optimizer.minimize(loss)
@@ -58,15 +62,16 @@ def main():
                                      image_list_file=args.image_list_file,
                                      transform=transform,
                                      shuffle=True)
-        train_dataloader = fluid.io.DataLoader.from_generator(capacity=10, use_multiprocess=True)
+        train_dataloader = fluid.io.DataLoader.from_generator(capacity=1, use_multiprocess=False)
         train_dataloader.set_sample_generator(dataloader, batch_size = args.batch_size, places=place)
         total_batch      = int(len(dataloader) / args.batch_size)
-        
+        psp_flag         = False
         # Step 2: Create model
         if args.net == "basic":
             model = UNet(59)
         else:
-            raise NotImplementedError(f"args.net: {args.net} is not Supported!")
+            model = PSPNet(59)
+            psp_flag = True
 
         # Step 3: Define criterion and optimizer
         criterion = Basic_SegLoss
@@ -80,7 +85,8 @@ def main():
                                criterion,
                                optimizer,
                                epoch,
-                               total_batch)
+                               total_batch,
+                               psp_flag)
             print(f"----- Epoch[{epoch}/{args.num_epochs}] Train Loss: {train_loss}")
 
             '''if epoch % args.save_freq == 0 or epoch == args.num_epochs:

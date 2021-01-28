@@ -9,8 +9,10 @@ class Transform(object):
         self.size = size
 
     def __call__(self, input, label):
-        input = cv2.resize(input, (self.size, self.size), interpolation=cv2.INTER_LINEAR)
-        label = cv2.resize(label, (self.size, self.size), interpolation=cv2.INTER_NEAREST)
+        flag = False
+        input = cv2.resize(input, (self.size, self.size), interpolation=cv2.INTER_LINEAR) / 255
+        label = cv2.resize(label, (self.size, self.size), interpolation=cv2.INTER_NEAREST).astype("int64")
+
         return input, label
 
 

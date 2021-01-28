@@ -17,6 +17,9 @@ def Basic_SegLoss(preds, labels, ignore_index=255):
     mask = fluid.layers.cast(mask, 'float32')
     # TODO: call criterion and compute loss
     loss = criterion(preds, labels)
+    if fluid.layers.has_nan(loss):
+        print("Error, there has a nan...")
+        print(preds)
     loss = loss * mask
     avg_loss = fluid.layers.mean(loss) / (fluid.layers.mean(mask) + eps)
     return avg_loss

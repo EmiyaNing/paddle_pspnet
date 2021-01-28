@@ -44,9 +44,9 @@ class Decoder(Layer):
         #       1 3x3 conv + 1bn + 1relu
         self.up = Conv2DTranspose(num_channels=num_channels, num_filters=num_filters, filter_size=2, stride=2)
         # this layers input will concat the layer and layer_prev, so the num_channels must be num_channels....
-        self.layer2 = Conv2D(num_channels=num_channels, num_filters=num_filters, filter_size=3, padding=1)
+        self.layer2 = Conv2D(num_channels=num_channels, num_filters=num_filters, filter_size=3, padding=1, act='relu')
         self.batch2  = BatchNorm(num_channels=num_filters, act='relu')
-        self.layer3 = Conv2D(num_channels=num_filters, num_filters=num_filters, filter_size=3, padding=1)
+        self.layer3 = Conv2D(num_channels=num_filters, num_filters=num_filters, filter_size=3, padding=1, act='relu')
         self.batch3  = BatchNorm(num_channels=num_filters, act='relu')
 
     def forward(self, inputs_prev, inputs):
@@ -90,7 +90,7 @@ class UNet(Layer):
         self.up2   = Decoder(256, 128)
         self.up1   = Decoder(128, 64)
 
-        self.last_conv = Conv2D(num_channels=64, num_filters=num_classes, filter_size=1)
+        self.last_conv = Conv2D(num_channels=64, num_filters=num_classes, filter_size=1, act='softmax')
 
 
     def forward(self, inputs):

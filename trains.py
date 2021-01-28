@@ -14,7 +14,7 @@ from seg_loss import Basic_SegLoss
 parser = argparse.ArgumentParser()
 parser.add_argument('--net', type=str, default='basic')
 parser.add_argument('--lr', type=float, default=0.001)
-parser.add_argument('--num_epochs', type=int, default=10)
+parser.add_argument('--num_epochs', type=int, default=20)
 parser.add_argument('--batch_size', type=int, default=4)
 parser.add_argument('--image_folder', type=str, default='./dummy_data')
 parser.add_argument('--image_list_file', type=str, default='./dummy_data/list.txt')
@@ -29,12 +29,11 @@ def train(dataloader, model, criterion, optimizer, epoch, total_batch):
     train_loss_meter = AverageMeter()
     for batch_id, data in enumerate(dataloader):
         image = data[0].astype("float32")
-        label = data[1].astype("int64")
+        label = data[1]
         image = fluid.layers.transpose(image, perm=(0, 3, 1, 2))
 
         pred  = model(image)
         loss  = criterion(pred, label)
-
         loss.backward()
         optimizer.minimize(loss)
         model.clear_gradients()
@@ -51,7 +50,7 @@ def train(dataloader, model, criterion, optimizer, epoch, total_batch):
 
 def main():
     # Step 0: preparation
-    place = paddle.fluid.CPUPlace()
+    place = paddle.fluid.CUDAPlace(0)
     with fluid.dygraph.guard(place):
         # Step 1: Define training dataloader
         transform  = Transform(256)
@@ -75,15 +74,16 @@ def main():
         
         # Step 4: Training
         for epoch in range(1, args.num_epochs+1):
+
             train_loss = train(train_dataloader,
                                model,
                                criterion,
                                optimizer,
                                epoch,
                                total_batch)
-            print(f"----- Epoch[{epoch}/{args.num_epochs}] Train Loss: {train_loss:.4f}")
+            print(f"----- Epoch[{epoch}/{args.num_epochs}] Train Loss: {train_loss}")
 
-            if epoch % args.save_freq == 0 or epoch == args.num_epochs:
+            '''if epoch % args.save_freq == 0 or epoch == args.num_epochs:
                 model_path = os.path.join(args.checkpoint_folder, f"{args.net}-Epoch-{epoch}-Loss-{train_loss}")
 
                 model_dict = model.state_dict()
@@ -91,7 +91,7 @@ def main():
                 optimizer_dict = optimizer.state_dict()
                 fluid.save_dygraph(optimizer_dict, model_path)
                 print(f'----- Save model: {model_path}.pdparams')
-                print(f'----- Save optimizer: {model_path}.pdopt')
+                print(f'----- Save optimizer: {model_path}.pdopt')'''
 
 
 

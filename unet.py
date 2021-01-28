@@ -17,7 +17,8 @@ class Encoder(Layer):
         #       1 3x3conc + 1bn + relu +
         #       1 2x2 pool
         # return features before and after pool
-        self.layer1 = Conv2D(num_channels=num_channels, num_filters= num_filters, filter_size=3, stride=1, act='relu')
+        # the first conv2d layer must padding 2 axis...
+        self.layer1 = Conv2D(num_channels=num_channels, num_filters= num_filters, filter_size=3, stride=1, padding=2 ,act='relu')
         self.batch1  = BatchNorm(num_channels=num_filters,act='relu')
         self.layer2 = Conv2D(num_channels=num_filters, num_filters= num_filters, filter_size=3, stride=1, act='relu')
         self.batch2  = BatchNorm(num_channels=num_filters, act='relu')
@@ -94,13 +95,13 @@ class UNet(Layer):
 
     def forward(self, inputs):
         x1, x = self.down1(inputs)
-        print(x1.shape, x.shape)
+        #print(x1.shape, x.shape)
         x2, x = self.down2(x)
-        print(x2.shape, x.shape)
+        #print(x2.shape, x.shape)
         x3, x = self.down3(x)
-        print(x3.shape, x.shape)
+        #print(x3.shape, x.shape)
         x4, x = self.down4(x)
-        print(x4.shape, x.shape)
+        #print(x4.shape, x.shape)
 
         # middle layers
         x = self.mid_conv1(x)
@@ -108,15 +109,15 @@ class UNet(Layer):
         x = self.mid_conv2(x)
         x = self.mid_bn2(x)
 
-        print(x4.shape, x.shape)
+        #print(x4.shape, x.shape)
         x = self.up4(x4, x)
-        print(x3.shape, x.shape)
+        #print(x3.shape, x.shape)
         x = self.up3(x3, x)
-        print(x2.shape, x.shape)
+        #print(x2.shape, x.shape)
         x = self.up2(x2, x)
-        print(x1.shape, x.shape)
+        #print(x1.shape, x.shape)
         x = self.up1(x1, x)
-        print(x.shape)
+        #print(x.shape)
 
         x = self.last_conv(x)
 
@@ -126,7 +127,7 @@ class UNet(Layer):
 def main():
     with fluid.dygraph.guard(fluid.CPUPlace()):
         model = UNet(num_classes=59)
-        x_data = np.random.rand(1, 3, 123, 123).astype(np.float32)
+        x_data = np.random.rand(1, 3, 256, 256).astype(np.float32)
         inputs = to_variable(x_data)
         pred = model(inputs)
 
